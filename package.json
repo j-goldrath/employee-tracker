@@ -1,0 +1,15 @@
+{
+  "name": "company_db",
+  "version": "1.0.0",
+  "description": "Simple command line app that allows for adding/updating/deleting of company departments, roles, and employees.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Goldrath",
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^8.2.0",
+    "mysql2": "^2.3.2"
+  }
+}
