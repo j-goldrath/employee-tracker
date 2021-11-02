@@ -19,27 +19,21 @@ const db = mysql.createConnection(
 function getAllDepartments() {
 
     // Query database
-    return db.query('SELECT name FROM departments ORDER BY name ASC;', function (err, results) {
-        return results;
-    });
+    return db.promise().query('SELECT name, id AS value FROM departments ORDER BY name ASC;');
 };
 
 // Function that returns array of all role names currently in roles table of db
 function getAllRoles() {
 
     // Query database
-    return db.query('SELECT title FROM roles ORDER BY department_id ASC;', function (err, results) {
-        return results;
-    });
+    return db.promise().query('SELECT title FROM roles ORDER BY department_id ASC;');
 };
 
 // Function that returns array of all employess currently in employees table of db
 function getAllEmployees() {
 
     // Query database
-    return db.query('SELECT name FROM departments ORDER BY id ASC;', function (err, results) {
-        return results;
-    });
+    return db.promise().query('SELECT name FROM departments ORDER BY id ASC;');
 
 };
 
@@ -161,7 +155,8 @@ async function addDepartment() {
 // Add a role function
 async function addRole() {
 
-    let departments = await getAllDepartments();
+    let [departments] = await getAllDepartments();
+    console.log(departments);
 
     const rolePrompt = [
         {
@@ -208,8 +203,8 @@ async function addRole() {
 // Add an employee function
 async function addEmployee() {
 
-    let roles = await getAllRoles();
-    let employees = await getAllEmployees();
+    let [roles] = await getAllRoles();
+    let [employees] = await getAllEmployees();
 
     const employeePrompt = [
         {
@@ -241,7 +236,7 @@ async function addEmployee() {
         .then((response) => {
 
             if (response.newEmployeeFirstName && response.newEmployeeLastName && response.newEmployeeRole) {
-                addRoleToDb(response.newRole, response.newRoleSalary, response.newRoleDepartment);
+                addEmployeeToDb(response.newRole, response.newRoleSalary, response.newRoleDepartment);
             } else {
                 console.log('Invalid and/or missing role information, please try again!');
                 addRole();
@@ -268,7 +263,7 @@ async function addEmployee() {
 function addDepartmentToDb(departmentName) {
 
     // Insert new department into departments table
-    db.query(`INSERT INTO departments (name) VALUES ("${departmentName}");`, function (err, results) {
+    db.query(`INSERT INTO departments (name) VALUES ( ? );`, departmentName, function (err, results) {
         if (err) throw err;
         console.log(`${departmentName} was succesfully added to departments!`);
         askWhatToDo();
@@ -279,7 +274,7 @@ function addDepartmentToDb(departmentName) {
 // Function that takes name of new role, salary, and department as arguments and then adds that role to roles table in company db
 function addRoleToDb(roleName, roleSalary, roleDepartmentId) {
 
-    db.query(`INSERT INTO roles (title, salary, department_id) VALUES ("${roleName}", ${roleSalary}, ${roleDepartmentId});`, function (err, results) {
+    db.query(`INSERT INTO roles (title, salary, department_id) VALUES ( ?, ?, ?);`, [ roleName, roleSalary, roleDepartmentId ], function (err, results) {
         if (err) throw err;
         console.log(`${roleName} was succesfully added to roles!`);
         askWhatToDo();
@@ -290,7 +285,7 @@ function addRoleToDb(roleName, roleSalary, roleDepartmentId) {
 // Function that takes new employee's first name, last name, role, and manager as arguments and adds employee info to employees table of company db
 function addEmployeeToDb(firstName, lastName, roleId, managerId) {
 
-    db.query(`INSERT INTO employees (first_name, last_name, department_id, manager_id) VALUES ("${firstName}", "${lastName}", ${roleId}, ${managerId});`, function (err, results) {
+    db.query(`INSERT INTO employees (first_name, last_name, department_id, manager_id) VALUES ( ?, ?, ?, ?);`, [ firstName, lastName, roleId, managerId ], function (err, results) {
         if (err) throw err;
         console.log(`${firstName} ${lastName} was succesfully added to employees!`);
         askWhatToDo();
