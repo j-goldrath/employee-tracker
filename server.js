@@ -1,6 +1,6 @@
 // Import modules inquirer and mysql2
 const mysql = require('mysql2');
-const inquirer = require('inquirer')
+const inquirer = require('inquirer');
 
 // Connection configuration for database
 const db = mysql.createConnection(
@@ -15,6 +15,8 @@ const db = mysql.createConnection(
     console.log(`Connected to the company database.`)
 );
 
+// ------- Database Read & Write Functions --------
+
 // Function that returns array of all department names currently in departments table of db
 function getAllDepartments() {
 
@@ -26,14 +28,14 @@ function getAllDepartments() {
 function getAllRoles() {
 
     // Query database
-    return db.promise().query('SELECT title FROM roles ORDER BY department_id ASC;');
+    return db.promise().query('SELECT title AS name, id AS value FROM roles ORDER BY department_id ASC;');
 };
 
 // Function that returns array of all employess currently in employees table of db
 function getAllEmployees() {
 
     // Query database
-    return db.promise().query('SELECT name FROM departments ORDER BY id ASC;');
+    return db.promise().query('SELECT CONCAT(last_name, ", ", first_name) AS name, id AS value FROM employees ORDER BY last_name ASC;');
 
 };
 
@@ -67,6 +69,55 @@ function viewAllEmployees() {
         askWhatToDo();
     });
 }
+
+// Function that takes name of department to add as argument and then adds that department to departments table of comapny db
+function addDepartmentToDb(departmentName) {
+
+    // Insert new department into departments table
+    db.query(`INSERT INTO departments (name) VALUES ( ? );`, departmentName, function (err, results) {
+        if (err) throw err;
+        console.log(`${departmentName} was succesfully added to departments!`);
+        askWhatToDo();
+    });
+
+};
+
+// Function that takes name of new role, salary, and department as arguments and then adds that role to roles table in company db
+function addRoleToDb(roleName, roleSalary, roleDepartmentId) {
+
+    db.query(`INSERT INTO roles (title, salary, department_id) VALUES ( ?, ?, ?);`, [ roleName, roleSalary, roleDepartmentId ], function (err, results) {
+        if (err) throw err;
+        console.log(`${roleName} was succesfully added to roles!`);
+        askWhatToDo();
+    });
+
+};
+
+// Function that takes new employee's first name, last name, role, and manager as arguments and adds employee info to employees table of company db
+function addEmployeeToDb(firstName, lastName, roleId, managerId) {
+
+    db.query(`INSERT INTO employees (first_name, last_name, department_id, manager_id) VALUES ( ?, ?, ?, ?);`, [ firstName, lastName, roleId, managerId ], function (err, results) {
+        if (err) throw err;
+        console.log(`${firstName} ${lastName} was succesfully added to employees!`);
+        askWhatToDo();
+    });
+
+};
+
+// Update/change an employee's designated role
+function updateEmployeeRoleInDb(employeeId, newRoleId) {
+
+    db.query(`UPDATE employees SET role_id = ? WHERE id = ?;`, [ newRoleId, employeeId ], function (err, results) {
+        if (err) throw err;
+        console.log("The employee's role was successfully updated!");
+        askWhatToDo();
+    });
+
+};
+
+
+
+// -------- User Prompt Menu Functions --------
 
 // Prompt user to select what they would like to do from list of options
 function askWhatToDo() {
@@ -156,7 +207,6 @@ async function addDepartment() {
 async function addRole() {
 
     let [departments] = await getAllDepartments();
-    console.log(departments);
 
     const rolePrompt = [
         {
@@ -203,8 +253,11 @@ async function addRole() {
 // Add an employee function
 async function addEmployee() {
 
+    // Retrieve lists of all roles and employees for use in prompt list selections
     let [roles] = await getAllRoles();
-    let [employees] = await getAllEmployees();
+    let [managers] = await getAllEmployees();
+
+    managers.push({ name: '-None-', value: NULL})
 
     const employeePrompt = [
         {
@@ -226,7 +279,7 @@ async function addEmployee() {
         {
             type: 'list',
             message: "Please select a manager for this new employee if desired:",
-            choices: employees,
+            choices: managers,
             name: 'newEmployeeManager',
         },
     ];
@@ -236,7 +289,7 @@ async function addEmployee() {
         .then((response) => {
 
             if (response.newEmployeeFirstName && response.newEmployeeLastName && response.newEmployeeRole) {
-                addEmployeeToDb(response.newRole, response.newRoleSalary, response.newRoleDepartment);
+                addEmployeeToDb(response.newEmployeeFirstName, response.newEmployeeLastName, response.newEmployeeRole, response.newEmployeeManager);
             } else {
                 console.log('Invalid and/or missing role information, please try again!');
                 addRole();
@@ -254,45 +307,46 @@ async function addEmployee() {
 
 };
 
-// Update/change an employee's designated role
-// function updateEmployeeRole() {
+// Update an employee function
+async function updateEmployeeRole() {
+    
+    // Retrieve lists of all employee and roles for use in prompt list selections
+    let [employees] = await getAllEmployees();
+    let [roles] = await getAllRoles();
 
-// };
+    const updateRolePrompt = [
+        {
+            type: 'list',
+            message: "Please select which employee's role should be updated:",
+            choices: employees,
+            name: 'employeeToUpdate',
+        },
+        {
+            type: 'list',
+            message: "Please select a new role for this employee:",
+            choices: roles,
+            name: 'updatedRole',
+        },
+    ];
 
-// Function that takes name of department to add as argument and then adds that department to departments table of comapny db
-function addDepartmentToDb(departmentName) {
+    await inquirer
+        .prompt(updateRolePrompt)
+        .then((response) => {
 
-    // Insert new department into departments table
-    db.query(`INSERT INTO departments (name) VALUES ( ? );`, departmentName, function (err, results) {
-        if (err) throw err;
-        console.log(`${departmentName} was succesfully added to departments!`);
-        askWhatToDo();
-    });
+            updateEmployeeRoleInDb(response.employeeToUpdate, response.updatedRole);
+            console.log('Employee role has been updated successfully!');
+            
+        })
+        .catch((error) => {
+            if (error.isTtyError) {
+                console.log("Prompt couldn't be rendered in the current environment");
+            } else {
+                console.log(error)
+            }
+        });
+
+    askWhatToDo();
 
 };
-
-// Function that takes name of new role, salary, and department as arguments and then adds that role to roles table in company db
-function addRoleToDb(roleName, roleSalary, roleDepartmentId) {
-
-    db.query(`INSERT INTO roles (title, salary, department_id) VALUES ( ?, ?, ?);`, [ roleName, roleSalary, roleDepartmentId ], function (err, results) {
-        if (err) throw err;
-        console.log(`${roleName} was succesfully added to roles!`);
-        askWhatToDo();
-    });
-
-};
-
-// Function that takes new employee's first name, last name, role, and manager as arguments and adds employee info to employees table of company db
-function addEmployeeToDb(firstName, lastName, roleId, managerId) {
-
-    db.query(`INSERT INTO employees (first_name, last_name, department_id, manager_id) VALUES ( ?, ?, ?, ?);`, [ firstName, lastName, roleId, managerId ], function (err, results) {
-        if (err) throw err;
-        console.log(`${firstName} ${lastName} was succesfully added to employees!`);
-        askWhatToDo();
-    });
-
-};
-
-
 
 askWhatToDo();
