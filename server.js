@@ -85,7 +85,7 @@ function addDepartmentToDb(departmentName) {
 // Function that takes name of new role, salary, and department as arguments and then adds that role to roles table in company db
 function addRoleToDb(roleName, roleSalary, roleDepartmentId) {
 
-    db.query(`INSERT INTO roles (title, salary, department_id) VALUES ( ?, ?, ?);`, [ roleName, roleSalary, roleDepartmentId ], function (err, results) {
+    db.query(`INSERT INTO roles (title, salary, department_id) VALUES ( ?, ?, ? );`, [roleName, roleSalary, roleDepartmentId], function (err, results) {
         if (err) throw err;
         console.log(`${roleName} was succesfully added to roles!`);
         askWhatToDo();
@@ -96,18 +96,25 @@ function addRoleToDb(roleName, roleSalary, roleDepartmentId) {
 // Function that takes new employee's first name, last name, role, and manager as arguments and adds employee info to employees table of company db
 function addEmployeeToDb(firstName, lastName, roleId, managerId) {
 
-    db.query(`INSERT INTO employees (first_name, last_name, department_id, manager_id) VALUES ( ?, ?, ?, ?);`, [ firstName, lastName, roleId, managerId ], function (err, results) {
-        if (err) throw err;
-        console.log(`${firstName} ${lastName} was succesfully added to employees!`);
-        askWhatToDo();
-    });
-
+    if (managerId == 'NULL') {
+        db.query('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES ( ?, ?, ?, NULL );', [firstName, lastName, roleId], function (err, results) {
+            if (err) throw err;
+            console.log(`${firstName} ${lastName} was succesfully added to employees!`);
+            askWhatToDo();
+        });
+    } else {
+        db.query('INSERT INTO employees (first_name, last_name, role_id, manager_id) VALUES ( ?, ?, ?, ? );', [firstName, lastName, roleId, managerId], function (err, results) {
+            if (err) throw err;
+            console.log(`${firstName} ${lastName} was succesfully added to employees!`);
+            askWhatToDo();
+        });
+    }
 };
 
 // Update/change an employee's designated role
 function updateEmployeeRoleInDb(employeeId, newRoleId) {
 
-    db.query(`UPDATE employees SET role_id = ? WHERE id = ?;`, [ newRoleId, employeeId ], function (err, results) {
+    db.query(`UPDATE employees SET role_id = ? WHERE id = ?;`, [newRoleId, employeeId], function (err, results) {
         if (err) throw err;
         console.log("The employee's role was successfully updated!");
         askWhatToDo();
@@ -115,7 +122,38 @@ function updateEmployeeRoleInDb(employeeId, newRoleId) {
 
 };
 
+// Delete employee from Database
+function deleteEmployeeFromDb(employeeId) {
 
+    db.query(`DELETE FROM employees WHERE id = ?`, employeeId, (err, result) => {
+        if (err) throw err;
+        console.log('Employee has been deleted successfully!')
+        askWhatToDo();
+      });
+
+}
+
+// Delete employee from Database
+function deleteRoleFromDb(roleId) {
+
+    db.query(`DELETE FROM roles WHERE id = ?`, roleId, (err, result) => {
+        if (err) throw err;
+        console.log('Role has been deleted successfully!')
+        askWhatToDo();
+      });
+
+}
+
+// Delete employee from Database
+function deleteDepartmentFromDb(departmentId) {
+
+    db.query(`DELETE FROM departments WHERE id = ?`, departmentId, (err, result) => {
+        if (err) throw err;
+        console.log('Department has been deleted successfully!')
+        askWhatToDo();
+      });
+
+}
 
 // -------- User Prompt Menu Functions --------
 
@@ -126,7 +164,7 @@ function askWhatToDo() {
         {
             type: 'list',
             message: 'What would you like to do?',
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', 'Update an employee role'],
+            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', "Update an employee's role", 'Delete an employee', 'Delete a role', 'Delete a department'],
             name: 'whatNext',
         },
     ];
@@ -154,8 +192,17 @@ function askWhatToDo() {
                 case 'Add an employee':
                     addEmployee();
                     return;
-                case 'Update an employee role':
+                case "Update an employee's role":
                     updateEmployeeRole();
+                    return;
+                case 'Delete an employee':
+                    deleteEmployee();
+                    return;
+                case 'Delete a role':
+                    deleteRole();
+                    return;
+                case 'Delete a department':
+                    deleteDepartment();
                     return;
             }
 
@@ -198,9 +245,6 @@ async function addDepartment() {
                 console.log(error)
             }
         });
-
-    askWhatToDo();
-
 };
 
 // Add a role function
@@ -245,9 +289,6 @@ async function addRole() {
                 console.log(error)
             }
         });
-
-    askWhatToDo();
-
 };
 
 // Add an employee function
@@ -257,7 +298,7 @@ async function addEmployee() {
     let [roles] = await getAllRoles();
     let [managers] = await getAllEmployees();
 
-    managers.push({ name: '-None-', value: NULL})
+    managers.push({ name: '-None-', value: 'NULL' })
 
     const employeePrompt = [
         {
@@ -292,7 +333,7 @@ async function addEmployee() {
                 addEmployeeToDb(response.newEmployeeFirstName, response.newEmployeeLastName, response.newEmployeeRole, response.newEmployeeManager);
             } else {
                 console.log('Invalid and/or missing role information, please try again!');
-                addRole();
+                addEmployee();
             }
         })
         .catch((error) => {
@@ -302,14 +343,11 @@ async function addEmployee() {
                 console.log(error)
             }
         });
-
-    askWhatToDo();
-
 };
 
 // Update an employee function
 async function updateEmployeeRole() {
-    
+
     // Retrieve lists of all employee and roles for use in prompt list selections
     let [employees] = await getAllEmployees();
     let [roles] = await getAllRoles();
@@ -335,7 +373,7 @@ async function updateEmployeeRole() {
 
             updateEmployeeRoleInDb(response.employeeToUpdate, response.updatedRole);
             console.log('Employee role has been updated successfully!');
-            
+
         })
         .catch((error) => {
             if (error.isTtyError) {
@@ -344,9 +382,102 @@ async function updateEmployeeRole() {
                 console.log(error)
             }
         });
+};
 
-    askWhatToDo();
+// Delete an employee function
+async function deleteEmployee() {
 
+    // Retrieve lists of all employee and roles for use in prompt list selections
+    let [employees] = await getAllEmployees();
+
+    const deleteEmployeePrompt = [
+        {
+            type: 'list',
+            message: "Please select which employee to delete:",
+            choices: employees,
+            name: 'employeeToDelete',
+        },
+    ];
+
+    await inquirer
+        .prompt(deleteEmployeePrompt)
+        .then((response) => {
+
+            deleteEmployeeFromDb(response.employeeToDelete);
+            console.log('Employee role has been updated successfully!');
+
+        })
+        .catch((error) => {
+            if (error.isTtyError) {
+                console.log("Prompt couldn't be rendered in the current environment");
+            } else {
+                console.log(error)
+            }
+        });
+};
+
+// Delete an role function
+async function deleteEmployee() {
+
+    // Retrieve lists of all employee and roles for use in prompt list selections
+    let [roles] = await getAllRoles();
+
+    const deleteRolePrompt = [
+        {
+            type: 'list',
+            message: "Please select which role to delete:",
+            choices: roles,
+            name: 'roleToDelete',
+        },
+    ];
+
+    await inquirer
+        .prompt(deleteRolePrompt)
+        .then((response) => {
+
+            deleteRoleFromDb(response.roleToDelete);
+            console.log('Role has been deleted successfully!');
+
+        })
+        .catch((error) => {
+            if (error.isTtyError) {
+                console.log("Prompt couldn't be rendered in the current environment");
+            } else {
+                console.log(error)
+            }
+        });
+};
+
+// Delete an department function
+async function deleteDepartment() {
+
+    // Retrieve lists of all employee and roles for use in prompt list selections
+    let [departments] = await getAllDepartments();
+
+    const deleteDepartmentPrompt = [
+        {
+            type: 'list',
+            message: "Please select department to delete:",
+            choices: departments,
+            name: 'departmentToDelete',
+        },
+    ];
+
+    await inquirer
+        .prompt(deleteDepartmentPrompt)
+        .then((response) => {
+
+            deleteDepartmentFromDb(response.departmentToDelete);
+            console.log('Department has been deleted successfully!');
+
+        })
+        .catch((error) => {
+            if (error.isTtyError) {
+                console.log("Prompt couldn't be rendered in the current environment");
+            } else {
+                console.log(error)
+            }
+        });
 };
 
 askWhatToDo();
