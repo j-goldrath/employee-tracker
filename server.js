@@ -164,7 +164,7 @@ function askWhatToDo() {
         {
             type: 'list',
             message: 'What would you like to do?',
-            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', "Update an employee's role", 'Delete an employee', 'Delete a role', 'Delete a department'],
+            choices: ['View all departments', 'View all roles', 'View all employees', 'Add a department', 'Add a role', 'Add an employee', "Update an employee's role", 'Delete an employee', 'Delete a role', 'Delete a department', 'Exit'],
             name: 'whatNext',
         },
     ];
@@ -204,6 +204,8 @@ function askWhatToDo() {
                 case 'Delete a department':
                     deleteDepartment();
                     return;
+                case 'Exit':
+                    break;
             }
 
         })

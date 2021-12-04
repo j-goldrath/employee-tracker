@@ -19,7 +19,7 @@ npm i
 npm start
 ```
 
-## Walkthroughs
+## Walkthrough
 ![Walkthrough](https://j-goldrath.github.io/employee-tracker/assets/employee-tracker-demo.gif)
 
 
