@@ -13,14 +13,16 @@ This simple node.js app allows for the management of a simple company database v
 ```
 npm i
 ```
+![Installation](https://github.com/j-goldrath/employee-tracker/blob/main/assets/employee-tracker-install.gif?raw=true)
 
 ## Usage
 ```
 npm start
 ```
+![Usage](https://github.com/j-goldrath/employee-tracker/blob/main/assets/employee-tracker-usage.gif?raw=true)
 
-## Walkthrough
-![Walkthrough](https://j-goldrath.github.io/employee-tracker/assets/employee-tracker-demo.gif)
+## Demo
+![Demo](https://j-goldrath.github.io/employee-tracker/assets/employee-tracker-demo.gif)
 
 
 
