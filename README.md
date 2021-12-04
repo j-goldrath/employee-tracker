@@ -1,4 +1,4 @@
-# Employee Tracker
+# Employee Tracker Console App
 This simple node.js app allows for the management of a simple company database via the console.  Users can add departments, roles, and employees.  They can also view, update, and delete specific records using designated menu options within console prompts.
 
 ## Table Of Contents
