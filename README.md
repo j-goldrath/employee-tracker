@@ -4,7 +4,7 @@ This simple node.js app allows for the management of a simple company database v
 ## Table Of Contents
 - [Installation](#installation)
 - [Usage](#usage)
-- [Walkthroughs](#walkthroughs)
+- [Demo](#demo)
 
 
 
